@@ -1,4 +1,3 @@
-// app.js
 
 const express = require('express');
 const multer = require('multer');
@@ -7,27 +6,44 @@ const mongoose = require('mongoose');
 const { SpeechClient } = require('@google-cloud/speech');
 const ffmpeg = require('fluent-ffmpeg');
 
+//Use .env file in config folder
+require("dotenv").config({ path: "config/.env" });
+
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: 'YOUR_CLOUD_NAME',
-  api_key: 'YOUR_API_KEY',
-  api_secret: 'YOUR_API_SECRET'
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
 });
 
 // Configure Google Cloud Speech
 const speechClient = new SpeechClient();
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost/video_recording_app', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+// // Connect to MongoDB
+// mongoose.connect('mongodb://localhost/video_recording_app', {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true
+// });
+//Connect to the database
+mongoose.connect(process.env.DB_STRING, 
+    {useNewUrlParser: true}, 
+    {useUnifiedTopology: true},
+    () => (console.log(`Connected to database: ${mongoose.connection.name}`))
+)
 
 const app = express();
 app.set('view engine', 'ejs');
 
 // Set up middleware
-app.use(express.static('public'));
+//app.use(express.static('public'));
+// Set up static file serving for the public folder
+app.use(express.static('public', { 
+    setHeaders: (res, path) => {
+      if (path.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      }
+    }
+  }));
 app.use(express.urlencoded({ extended: true }));
 
 // Define routes
@@ -181,6 +197,6 @@ app.post('/process', (req, res) => {
 // app.listen(3000, () => {
 //   console.log('Server started on port 3000');
 // });
-app.listen(process.env.PORT || PORT, () =>{
+app.listen(process.env.PORT, () =>{
     console.log(`Server is running on port ${process.env.PORT}`)
 })
