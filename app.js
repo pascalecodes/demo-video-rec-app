@@ -3,6 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const mongoose = require('mongoose');
+const connectDB = require("./config/database");
 const { SpeechClient } = require('@google-cloud/speech');
 const ffmpeg = require('fluent-ffmpeg');
 
@@ -25,11 +26,13 @@ const speechClient = new SpeechClient();
 //   useUnifiedTopology: true
 // });
 //Connect to the database
-mongoose.connect(process.env.DB_STRING, 
-    {useNewUrlParser: true}, 
-    {useUnifiedTopology: true},
-    () => (console.log(`Connected to database: ${mongoose.connection.name}`))
-)
+// mongoose.connect(process.env.DB_STRING, 
+//     {useNewUrlParser: true}, 
+//     {useUnifiedTopology: true},
+//     () => (console.log(`Connected to database: ${mongoose.connection.name}`))
+// )
+//Connect To Database
+connectDB();
 
 const app = express();
 app.set('view engine', 'ejs');
