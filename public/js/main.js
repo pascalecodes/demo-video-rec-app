@@ -78,3 +78,25 @@ recordButton.addEventListener('click', async () => {
     recordButton.textContent = 'Start Recording';
   }
 });
+
+function displayPrompt(prompt) {
+  const promptElement = document.getElementById('prompt');
+  promptElement.textContent = prompt;
+}
+
+function shareRecording(recordingUrl) {
+  // Open social media sharing options or generate shareable link
+}
+
+function displayRecordings(recordings) {
+  // Populate an element with information about each recording (title, date, thumbnail)
+}
+
+function trimRecording(recordingUrl, startTime, endTime) {
+  // Call backend function to perform trimming on the stored recording
+}
+
+function filterStoriesByTag(tag) {
+  // Retrieve stories with the specified tag from the database
+}
+
