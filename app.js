@@ -1,13 +1,3 @@
-import { createRoot } from 'react-dom/client';
-
-// Clear the existing HTML content
-document.body.innerHTML = '<div id="app"></div>';
-
-// Render your React component instead
-const root = createRoot(document.getElementById('app'));
-root.render(<h1>Hello, world</h1>);
-
-
 const express = require('express');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
@@ -15,6 +5,7 @@ const mongoose = require('mongoose');
 const connectDB = require("./config/database");
 const { SpeechClient } = require('@google-cloud/speech');
 const ffmpeg = require('fluent-ffmpeg');
+const path = require('path');
 
 //Use .env file in config folder
 require("dotenv").config({ path: "config/.env" });
@@ -57,6 +48,17 @@ app.use(express.static('public', {
     }
   }));
 app.use(express.urlencoded({ extended: true }));
+
+//setup react app
+// Serve the static files from the React app
+app.use(express.static(path.join(__dirname, 'client', 'build')));
+
+// Handle other API routes and endpoints here
+
+// Serve the React app for any other requests
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+});
 
 // Define routes
 app.get('/', (req, res) => {
