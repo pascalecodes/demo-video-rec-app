@@ -1,11 +1,21 @@
-const express = require('express');
-const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const mongoose = require('mongoose');
+const express = require("express");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+const mongoose = require("mongoose");
 const connectDB = require("./config/database");
-const { SpeechClient } = require('@google-cloud/speech');
-const ffmpeg = require('fluent-ffmpeg');
-const path = require('path');
+const { SpeechClient } = require("@google-cloud/speech");
+const ffmpeg = require("fluent-ffmpeg");
+const path = require("path");
+import React from "react";
+import ReactDOM from "react-dom";
+import App from ".client/build/App";
+
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById("root")
+);
 
 //Use .env file in config folder
 require("dotenv").config({ path: "config/.env" });
@@ -26,8 +36,8 @@ const speechClient = new SpeechClient();
 //   useUnifiedTopology: true
 // });
 //Connect to the database
-// mongoose.connect(process.env.DB_STRING, 
-//     {useNewUrlParser: true}, 
+// mongoose.connect(process.env.DB_STRING,
+//     {useNewUrlParser: true},
 //     {useUnifiedTopology: true},
 //     () => (console.log(`Connected to database: ${mongoose.connection.name}`))
 // )
@@ -35,99 +45,105 @@ const speechClient = new SpeechClient();
 connectDB();
 
 const app = express();
-app.set('view engine', 'ejs');
+app.set("view engine", "ejs");
 
 // Set up middleware
 //app.use(express.static('public'));
 // Set up static file serving for the public folder
-app.use(express.static('public', { 
+app.use(
+  express.static("public", {
     setHeaders: (res, path) => {
-      if (path.endsWith('.js')) {
-        res.setHeader('Content-Type', 'application/javascript');
+      if (path.endsWith(".js")) {
+        res.setHeader("Content-Type", "application/javascript");
       }
-    }
-  }));
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true }));
 
 //setup react app
 // Serve the static files from the React app
-app.use(express.static(path.join(__dirname, 'client', 'build')));
+app.use(express.static(path.join(__dirname, "client", "build")));
 
 // Handle other API routes and endpoints here
 
 // Serve the React app for any other requests
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client", "build", "index.html"));
 });
 
-// Define routes
-app.get('/', (req, res) => {
-  res.render('index');
-});
+// Define routes for ejs render
+// app.get("/", (req, res) => {
+//   res.render("index");
+// });
 
 // file upload route (/upload) to handle the video upload and save it to the chosen cloud storage provider (S3 or Google Cloud Storage).
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: "uploads/" });
 
-app.post('/upload', upload.single('file'), (req, res) => {
+app.post("/upload", upload.single("file"), (req, res) => {
   const path = req.file.path;
-  
+
   // Upload the video to Cloudinary
-  cloudinary.uploader.upload(path, { resource_type: 'video' }, (error, result) => {
-    if (error) {
-      console.error('Error uploading to Cloudinary:', error);
-      return res.status(500).json({ error: 'Error uploading video' });
+  cloudinary.uploader.upload(
+    path,
+    { resource_type: "video" },
+    (error, result) => {
+      if (error) {
+        console.error("Error uploading to Cloudinary:", error);
+        return res.status(500).json({ error: "Error uploading video" });
+      }
+
+      res.json(result);
     }
-    
-    res.json(result);
-  });
+  );
 });
 
 // video processing route (/process) to perform video editing and AI analysis using the Cloudinary API and other AI services
 
-app.post('/transcribe', (req, res) => {
+app.post("/transcribe", (req, res) => {
   const publicId = req.body.publicId;
 
   // Get the video URL from Cloudinary
-  const videoUrl = cloudinary.url(publicId, { resource_type: 'video' });
+  const videoUrl = cloudinary.url(publicId, { resource_type: "video" });
 
   // Transcribe the video using the Google Cloud Speech-to-Text API
   speechClient
     .longRunningRecognize({
       audio: { uri: videoUrl },
       config: {
-        encoding: 'LINEAR16',
+        encoding: "LINEAR16",
         sampleRateHertz: 16000,
-        languageCode: 'en-US'
-      }
+        languageCode: "en-US",
+      },
     })
-    .then(data => {
+    .then((data) => {
       const operation = data[0];
       return operation.promise();
     })
-    .then(data => {
+    .then((data) => {
       const transcription = data[0].results
-        .map(result => result.alternatives[0].transcript)
-        .join('\n');
-      
+        .map((result) => result.alternatives[0].transcript)
+        .join("\n");
+
       res.json({ transcription });
     })
-    .catch(error => {
-      console.error('Error transcribing video:', error);
-      res.status(500).json({ error: 'Error transcribing video' });
+    .catch((error) => {
+      console.error("Error transcribing video:", error);
+      res.status(500).json({ error: "Error transcribing video" });
     });
 });
 
 // video processing route (/process) to perform video editing and AI analysis using the Cloudinary API and other AI services.
 
-app.post('/process', (req, res) => {
+app.post("/process", (req, res) => {
   const publicId = req.body.publicId;
 
   // Perform video editing using Cloudinary
   // Example: Trim the video to the first 10 seconds
-  const videoUrl = cloudinary.url(publicId, { resource_type: 'video' });
+  const videoUrl = cloudinary.url(publicId, { resource_type: "video" });
   const editedVideoUrl = cloudinary.url(publicId, {
-    resource_type: 'video',
-    transformation: [{ duration: 10 }]
+    resource_type: "video",
+    transformation: [{ duration: 10 }],
   });
 
   // Perform AI analysis using other APIs
@@ -141,6 +157,6 @@ app.post('/process', (req, res) => {
 // app.listen(3000, () => {
 //   console.log('Server started on port 3000');
 // });
-app.listen(process.env.PORT, () =>{
-    console.log(`Server is running on port ${process.env.PORT}`)
-})
+app.listen(process.env.PORT, () => {
+  console.log(`Server is running on port ${process.env.PORT}`);
+});
